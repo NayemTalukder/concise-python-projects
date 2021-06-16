@@ -7,58 +7,63 @@ cur = con.cursor()
 
 def createTable(table_names):
   for i in table_names:
+    Unique = ''
+    if i == 'gmail' or i == 'other_email': Unique = 'UNIQUE'
     sql =  """
-      CREATE TABLE {} (
+      CREATE TABLE IF NOT EXISTS {} (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        email text NOT NULL
+        email text NOT NULL {}
       );
-    """.format(i)
+    """.format(i, Unique)
     cur.execute(sql)
-
 
 def dropTable(table_names):
   for i in table_names:
     sql = 'DROP TABLE IF EXISTS {}'.format(i)
     cur.execute(sql)
 
+def renameTable(from_table, to_table):
+  sql = 'ALTER TABLE {} RENAME TO {}'.format(from_table, to_table)
+  cur.execute(sql)
 
 def create_temporary_tables():
   # Dropping Tables { IF EXISTS } 
   print('{ IF EXISTS } Dropping Tables . . . . .') 
-  dropTable(['temp', 'invalid', 'duplicate', 'unique_gmail', 'temp_temp', 'unique_other_email'])
+  dropTable(['temp', 'duplicate', 'temp_gmail', 'temp_other_email'])
 
   # Creating Tables
   print('Creating Tables . . . . .') 
-  createTable(['temp', 'invalid', 'duplicate', 'unique_gmail', 'temp_temp', 'unique_other_email'])
+  createTable(['gmail', 'other_email', 'temp', 'duplicate', 'temp_other_email'])
 
 
 # [START] => Process Input
 def processTemporaryEmail():
   print('[START] => Processing Starts . . . . .')
   processInvalidEmail()
-  
-  temp_table_length = getTableLength('temp')
-  cycles_needed = math.ceil(temp_table_length / 500000) + 1
-  print('[START] => Processing Cycle Starts . . . . .')
-  i = 1
-  current_cycle = 0
-  while i >= 1:
-    current_cycle += 1
-    i = processingCycle(current_cycle, cycles_needed)
+  seperateEmail()
+  InsertIntoMainTable('temp_gmail', 'gmail')
+  InsertIntoMainTable('temp_other_email', 'other_email')
 
-  print('[END] => Processing Cycle Ends . . . . .')
+  
   # Save Duplicate and Unique Emails to file
-  getAllFromTable('unique_gmail', 'unique')
-  getAllFromTable('duplicate', False)
-  # Seperate Otrher Emails From Gmail
-  processUniqueGmailTable()
+  copyAllFromTableToFile('temp_gmail', 'unique_gmail')
+  copyAllFromTableToFile('temp_other_email', 'unique_other_email')
+  copyAllFromTableToFile('duplicate', False)
   print('[END] => Processing Ends . . . . .')
 
 
 def processInvalidEmail():
   print('Invalid Email Processing . . . . .')
+  cur.execute("Select * from temp where email not Like '%.com'")
+  data1 = cur.fetchall()
+
+  cur.execute("Select * from temp where email Like '%..%'")
+  data2 = cur.fetchall()
+
   cur.execute("Select * from temp where email NOT Like '%@%'")
-  data = cur.fetchall()
+  data3 = cur.fetchall()
+
+  data = data1 + data2 + data3
 
   date = datetime.datetime.now()
   file_path = '../feadback/{}_{}__T{}.txt'.format('invalid', date, len(data)).replace(" ", "_").replace(":", "-")
@@ -66,46 +71,33 @@ def processInvalidEmail():
   deleteChunkFromTable('temp', data)
 
 
-def processingCycle (current_cycle, cycles_needed):
-  print('{} / {} => Processing Cycle Running . . . . .'.format(current_cycle, cycles_needed))
-  sql = "SELECT * FROM temp LIMIT 500000"
+def seperateEmail ():
+  print('Email Seperating . . . . .')
+  sql = "Select * from temp where email not Like '%@gmail.com%';"
   cur.execute(sql)
   result = cur.fetchall()
-
-  if len(result) != 0:
-    InsertFromTableToTable('temp', 'temp_temp', result, True)
-    processTempTempTable(current_cycle)
-
-  return len(result)
+  InsertFromTableToTable('temp', 'temp_other_email', result, True)
+  renameTable('temp', 'temp_gmail')
 
 
-def processTempTempTable(current_cycle):
-  print('TempTemp Table Processing for Cycle => {} . . . . .'.format(current_cycle))
-  sql = "SELECT * FROM temp_temp GROUP BY email"
-  cur.execute(sql)
-  result = cur.fetchall()
-  InsertFromTableToTable('temp_temp', 'unique_gmail', result, True)
-  
-  sql = "SELECT * FROM temp_temp"
-  cur.execute(sql)
-  result = cur.fetchall()
-  InsertFromTableToTable('temp_temp', 'duplicate', result, True)
+def InsertIntoMainTable(from_table, to_table):
+  print('Inserting into {} . . . . .'.format(to_table) )
+  print('    0% => Inserting into {} . . . . .'.format(to_table) )
+  result = getAllFromTable(from_table)
+  duplicate = []
+  p = 0 
+  for index, row in enumerate(result):
+    if index >= (len(result) / 100) * p:
+      p += 1
+      print('    {}% => Inserting into {}. . . . .'.format(p, to_table) )
+    try: insertIntoTable( to_table, str("(NULL, '{}')".format(row[1])) )
+    except: 
+      duplicate.append(row)
+    if len(duplicate) == 30000 or index == len(result) - 1:
+      InsertFromTableToTable(from_table, 'duplicate', duplicate, True)
+      duplicate = []
 
-
-def processUniqueGmailTable():
-  print('Unique Email Processing . . . . .')
-  sql = "Select * from unique_gmail where email not Like '%@gmail.com%';"
-  cur.execute(sql)
-  result = cur.fetchall()
-  InsertFromTableToTable('', 'unique_other_email', result, False)
 # [END] => Process Input
-
-
-def getTableLength(table_name):
-  cur.execute("Select * from {}".format(table_name))
-
-  data = cur.fetchall()
-  return len(data)
 
 
 def InsertFromTableToTable (from_table, to_table, result, delete_flag):
@@ -117,10 +109,10 @@ def InsertFromTableToTable (from_table, to_table, result, delete_flag):
     if rows != '':
       rows += ', '
       ids += ', '
-    rows += str(row)
+    rows += str("(NULL, '{}')".format(row[1]))
     ids += str(row[0])
   
-    if i == 25000 or index == len(result) - 1:
+    if i == 35000 or index == len(result) - 1:
       insertIntoTable(to_table, rows)
       if delete_flag:
         sql = "DELETE FROM {} WHERE id IN ({})".format(from_table, ids)
@@ -132,10 +124,6 @@ def InsertFromTableToTable (from_table, to_table, result, delete_flag):
 
 
 def insertIntoTable(table_name, rows):
-  # if table_name == 'temp_temp':
-    # print(table_name)
-    # print(rows)
-
   if rows != "":
     sql = "INSERT INTO {} VALUES {}".format(table_name, rows)
     cur.execute(sql)
@@ -152,20 +140,43 @@ def getChunkFromTable(table_name, start, limit):
   saveIntoFile(file_path, result)
 
 
-def getAllFromTable(table_name, modified_table_name):
+def deleteChunkFromTable(table_name, result):
+  ids = ''
+  i = 0
+
+  for index, row in enumerate(result):
+    i += 1
+    ids += str(row[0])
+    
+    if i == 50000 or index == len(result) - 1:
+      if ids != '':
+        sql = "DELETE FROM {} WHERE id IN ({})".format(table_name, ids)
+        cur.execute(sql)
+        con.commit()
+      ids = ''
+      i = 0
+    else: ids += ', '
+
+
+def copyAllFromTableToFile(table_name, modified_table_name):
   file_name = table_name
   if modified_table_name: file_name = modified_table_name
-  sql = "SELECT * FROM {}".format(table_name)
-  cur.execute(sql)
-  result = cur.fetchall()
+  result = getAllFromTable(table_name)
 
   date = datetime.datetime.now()
   file_path = '../feadback/{}_{}__T{}.txt'.format(file_name, date, len(result)).replace(" ", "_").replace(":", "-")
   saveIntoFile(file_path, result)
 
 
+def getAllFromTable(table_name):
+  sql = "SELECT * FROM {}".format(table_name)
+  cur.execute(sql)
+  result = cur.fetchall()
+  return result
+
+
 def saveIntoFile(file_path, result):
-  print(file_path)
+  print('Writing File => {}'.format(file_path) )
   file = open(file_path, 'w')
   rows = ''
   i = 0
@@ -185,26 +196,6 @@ def saveIntoFile(file_path, result):
   file.close()
 
 
-def deleteChunkFromTable(table_name, result):
-  print(table_name)
-  ids = ''
-  i = 0
-
-  for index, row in enumerate(result):
-    i += 1
-    ids += str(row[0])
-    
-    if i == 50000 or index == len(result) - 1:
-      if ids != '':
-        sql = "DELETE FROM {} WHERE id IN ({})".format(table_name, ids)
-        cur.execute(sql)
-        con.commit()
-      ids = ''
-      i = 0
-    else: ids += ', '
-
-
-
 # Table Backup While Shuffle | Currently no Use
 def backupTable(table_name, date):
   sql = "SELECT * FROM {}".format(table_name)
@@ -217,27 +208,11 @@ def backupTable(table_name, date):
   for x in result: file.writelines(x[1])
   file.close()
 
-# Shuffle Data Tables | Currently no Use
-def shuffleRows(table_name):
-  date = datetime.datetime.now()
-  backupTable(table_name, date)
-
-  create_table = "CREATE TABLE demo ( id int NOT NULL AUTO_INCREMENT, email varchar(255), primary key (id) )"
-  cur.execute(create_table)
-
-  i = 1
-  while i >= 1:
-    sql = "SELECT * FROM {} ORDER BY RAND () LIMIT 25000".format(table_name)
-    cur.execute(sql)
-    result = cur.fetchall()
-
-    if len(result) != 0: InsertFromTableToTable (table_name, 'demmo', result, True)
-    i = len(result)
-
-  # # Drop Current Table
-  # sql = 'DROP TABLE {}'.format(table_name)
-  # cur.execute(sql)
-
-  # # Rename Existing Table
-  # sql = 'ALTER TABLE {} RENAME TO {}'.format('temp', table_name)
-  # cur.execute(sql)
+def processInputToInsert (Lines):
+  all_rows = ''
+  
+  for index, line in enumerate(Lines):
+    row = "(NULL, '{}')".format(line[1])
+    if index != len(Lines) - 1 and all_rows != '': all_rows += ', '
+    all_rows += str(row)
+  return all_rows

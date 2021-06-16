@@ -52,17 +52,37 @@ def union():
   data = cur.fetchall()
   print(len(data))
   
+def checkDuplicancy():
+  sql = """SELECT * FROM temp where email IN (
+    'gcvhxfcv@gmail.com',
+    'gcvhxfcv@gmail.com',
+    'gcvhxfcv@gmail.com',
+    'gcvhxfcv@gmail.com',
+    'gcvhxfcv@gmail.com',
+    'gcvhxfcv@gmail.com',
+    'gcvhxfcv@gmail.com',
+    'gcvhxfcv@gmail.com',
+    'gcvhxfcv@gmail.com',
+    'gcvhxfcv@gmail.com'
+    )"""
+  
+  cur.execute(sql)
+  data = cur.fetchall()
+  print(len(data))
+
 
 if __name__ == '__main__':
   # searching()
 
   # findDistinct()
 
-  findAll('unique_gmail')
-  findAll('unique_other_email')
-  # findAll('temp')
-  findAll('duplicate')
+  # findAll('unique_gmail')
+  # findAll('unique_gmail')
+  findAll('temp_gmail')
+  # db.shuffleRows('temp')
+  # findAll('duplicate')
 
+  # checkDuplicancy()
   # union()
 
   # date = datetime.datetime.now()
