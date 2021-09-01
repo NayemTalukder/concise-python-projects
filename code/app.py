@@ -1,32 +1,5 @@
-import json, glob, os, random, shutil
-ROOT_DIR = 'C:\\Users\\nayem\Desktop\\json_editor\\code\\input'
-
-def generateJson(input_json, ran_images):
-  train_json = {}
-  val_json = {}
-  mydata = json.load(open(input_json, "r"))
-  for item in mydata:
-    for key in mydata[item]:
-      if key == 'filename': 
-        if mydata[item]['filename'] in ran_images: val_json[item] = mydata[item]
-        else: train_json[item] = mydata[item]
-  with open('output/train.json', "w") as outfile: json.dump(train_json, outfile)
-  with open('output/val.json', "w") as outfile: json.dump(val_json, outfile)
-
-def splitRandomly():
-  input_json = glob.glob("input/*.json")[0]
-  limit = int(calculateLength([input_json])[0] * .4)
-  ran_images = []  
-  i = 0
-  while i != limit:
-    ran =  random.choice(os.listdir(ROOT_DIR)) 
-    if ".json" not in ran and ".md" not in ran and ran not in ran_images:
-      i = i + 1
-      img = os.path.join(ROOT_DIR, 'val\\', ran)
-      shutil.move(os.path.join(ROOT_DIR, ran), img)
-      ran_images.append(ran)
-  generateJson(input_json, ran_images)
-
+import json, glob, os
+import split_randomly
 
 
 def deleteTmageByType(image_type, keys_to_remove):
@@ -106,4 +79,4 @@ if __name__=='__main__':
   elif i == 3: deleteItemWithEmptyRegions(read_inputs)
   elif i == 4: mergeFiles(read_inputs)
   elif i == 5: deleteImages(read_inputs)
-  elif i == 6: splitRandomly()
+  elif i == 6: split_randomly.splitRandomly()
