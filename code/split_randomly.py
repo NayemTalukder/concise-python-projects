@@ -1,7 +1,7 @@
 import json, glob, os, random, shutil
 from pathlib import Path
 from os.path import join as joinP
-import app
+import json_preprocessing
 
 INPUT = 'C:\\Users\\nayem\Desktop\\json_editor\\code\\input'
 OUTPUT = 'C:\\Users\\nayem\Desktop\\json_editor\\code\\output'
@@ -26,7 +26,7 @@ def generateTrain():
       shutil.move(joinP(INPUT, j), joinP(OUTPUT, 'train\\', j))
 
 def generateVal(input_json):
-  limit = int(app.calculateLength([input_json])[0] * .4)
+  limit = int(json_preprocessing.calculateLength([input_json])[0] * .4)
   val_images = []
   i = 0
   while i != limit:

@@ -1,12 +1,13 @@
 {
-  "name": "sqlite_email_storage",
+  "name": "json_editor_and_file_manipulator",
   "cd_py3": "code",
   "scripts": {
-    "a": "activate email",
-    "py3": "yarn a && cd %npm_package_cd_py3% && python3",
-    "app": "yarn a && cd code && python3 app.py",
-    "pip": "yarn a && python3 -m pip",
-    "mkenv": "conda create --name"
+    "a": "activate base",
+    "py3": "yarn a && cd %npm_package_cd_py3% && python",
+    "app": "yarn a && cd %npm_package_cd_py3% && python app.py",
+    "pip": "yarn a && python -m pip",
+    "mkenv": "conda create --name",
+    "envs": "conda env list"
   },
   "license": "MIT"
 }
