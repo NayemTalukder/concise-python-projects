@@ -66,7 +66,7 @@ def processInvalidEmail():
   data = data1 + data2 + data3
 
   date = datetime.datetime.now()
-  file_path = '../feadback/{}_{}__T{}.txt'.format('invalid', date, len(data)).replace(" ", "_").replace(":", "-")
+  file_path = './output/{}_{}__T{}.txt'.format('invalid', date, len(data)).replace(" ", "_").replace(":", "-")
   saveIntoFile(file_path, data)
   deleteChunkFromTable('temp', data)
 
@@ -136,7 +136,7 @@ def getChunkFromTable(table_name, start, limit):
   result = cur.fetchall()
 
   date = datetime.datetime.now()
-  file_path = '../feadback/{}_{}__S{}-E{}_T{}.txt'.format(table_name, date, start, start+len(result)-1, len(result)).replace(" ", "_").replace(":", "-")
+  file_path = './output/{}_{}__S{}-E{}_T{}.txt'.format(table_name, date, start, start+len(result)-1, len(result)).replace(" ", "_").replace(":", "-")
   saveIntoFile(file_path, result)
 
 
@@ -164,7 +164,7 @@ def copyAllFromTableToFile(table_name, modified_table_name):
   result = getAllFromTable(table_name)
 
   date = datetime.datetime.now()
-  file_path = '../feadback/{}_{}__T{}.txt'.format(file_name, date, len(result)).replace(" ", "_").replace(":", "-")
+  file_path = './output/{}_{}__T{}.txt'.format(file_name, date, len(result)).replace(" ", "_").replace(":", "-")
   saveIntoFile(file_path, result)
 
 
@@ -202,7 +202,7 @@ def backupTable(table_name, date):
   cur.execute(sql)
   result = cur.fetchall()
 
-  file_path = '../feadback/backup_{}_{}.txt'.format(table_name, date).replace(" ", "_").replace(":", "-")
+  file_path = './output/backup_{}_{}.txt'.format(table_name, date).replace(" ", "_").replace(":", "-")
   file = open(file_path, 'w')
 
   for x in result: file.writelines(x[1])

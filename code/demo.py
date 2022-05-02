@@ -86,7 +86,7 @@ if __name__ == '__main__':
   # union()
 
   # date = datetime.datetime.now()
-  # file_path = '../feadback/unique_{}__T{}.txt'.format(date, len(data)).replace(" ", "_").replace(":", "-")
+  # file_path = './output/unique_{}__T{}.txt'.format(date, len(data)).replace(" ", "_").replace(":", "-")
   # db.saveIntoFile(file_path, data)
 
  

@@ -1,5 +1,4 @@
-import os
-import datetime
+import glob
 import db
 
 def processInputToInsert (Lines, table_name):
@@ -26,11 +25,10 @@ def processInputToInsert (Lines, table_name):
 
 def read_input():
   db.create_temporary_tables()
+  read_inputs = glob.glob("input/*.txt")
 
-  for x in range(1):
-    print('input ({}) => Reading . . . . .'.format(x + 1))
-    file_path = '../input/input ({}).txt'.format(x + 1)
-    input = open(file_path, 'r')
+  for f in read_inputs:
+    input = open(f, 'r')
     Lines = input.readlines()
     processInputToInsert(Lines, 'temp')
   db.processTemporaryEmail()
