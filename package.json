@@ -1,0 +1,12 @@
+{
+  "name": "py_big_query_email_processing",
+  "cd_py3": "code",
+  "scripts": {
+    "a": "activate BigQuery",
+    "py3": "yarn a && cd %npm_package_cd_py3% && python",
+    "app": "yarn a && cd %npm_package_cd_py3% && python app.py",
+    "pip": "yarn a && python -m pip",
+    "mkenv": "conda create --name"
+  },
+  "license": "MIT"
+}
